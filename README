@@ -1,0 +1,10 @@
+xmlInjectElementCount.pl README
+
+Please see the inline comments for a detailed explanation of the logic.
+
+The script parses a given XSD file, and an accompanying, conforming XML file. If any Processing Instructions are found in the XSD file ("elementCount"), then XML Elements in the scope specified, and of the type specified, are counted. The parent Element of the Processing Instruction has the count injected into an attribute.
+
+The purpose of this is to allow the design of data in an object-oriented manner (XML), but then to store the static data in a data-oriented manner at run-time. At run-time, the Element count can be used to initialise dynamic data structures to store the exact number of Elements (e.g. an array).
+
+The files in this repository were created using the following command:
+xmlInjectElementCount.pl --xsdIn ./in/gameXml.xsd --xmlIn ./in/gameConfig.xml --outDir ./out
