@@ -33,14 +33,18 @@
 
 #Processing Instruction required parameters:
 #	syntax: name=[value[|alt_value]*]
-#		elementName=[.+]:			The name of the Elements that should be counted.
+#		elementName=[.+]:
+#			The name of the Elements that should be counted.
 #
-#		attributeName=[.+]: 		The name of the Attribute to store the count.
+#		attributeName=[.+]:
+#			The name of the Attribute to store the count.
 #
-#		scope=["children"]:			Only Elements in the specified scope will be counted.
-#											-children: count only direct descendants of 
-#											the parent Element of the Processing 
-#											Instruction.
+#		scope=["children"|"descendants"]:
+#			Only Elements in the specified scope will be counted.
+#				-children: count only direct descendants of the parent Element of the 
+#				Processing Instruction.
+#				-descendants: count all descendants of the parent Element of the 
+#				Processing Instruction.
 
 #TODO: allow for an Element Type to be specified, instead of a name.
 
@@ -182,13 +186,18 @@ if(-e $xsdIn && -e $xmlIn ){
 							my $elementCount = 0;
 							if($piParamsHashRef->{"scope"} eq "children"){
 								$elementCount = @{$xmlData->findnodes($elementPath."/".$piParamsHashRef->{"elementName"})};
-								#store the count in the named attribute
-								$countStoreElement->setAttribute($piParamsHashRef->{"attributeName"}, $elementCount);
+							}
+							elsif($piParamsHashRef->{"scope"} eq "descendants"){
+								$elementCount = @{$xmlData->findnodes($elementPath."//".$piParamsHashRef->{"elementName"})};
 							}
 							else{
 								print STDERR "WARNING: \"scope\" mode specified in Processing Instruction ".
 								"is not supported. IGNORING\n";
 							}
+							
+							#store the count in the named attribute
+							$countStoreElement->setAttribute($piParamsHashRef->{"attributeName"}, $elementCount);
+
 						}	
 						else{
 							print STDERR "ERROR: missing data for Processing Instruction, ".
