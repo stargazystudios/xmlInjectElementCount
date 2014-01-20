@@ -47,6 +47,7 @@
 use strict;
 use Getopt::Long;
 use XML::LibXML;
+use File::Basename;
 use Data::Dumper;
 
 sub checkTypeAndExpandElement{
@@ -108,7 +109,7 @@ sub searchElements{
 
 my $xsdIn = '';
 my $xmlIn = '';
-my $outDir = './';
+my $outDir = '';
 my $elementCountPI = 'elementCount'; #keyword to denote uid Processing Instruction
 
 GetOptions(	'xsdIn=s' => \$xsdIn,
@@ -141,7 +142,7 @@ if(-e $xsdIn && -e $xmlIn ){
 						$nodeDataString =~ s/"//g; #remove quotation marks
 						
 						#store all PI instruction parameters, allowing for multiple PIs by using an array
-						push($countStoreTypes{$type->getAttribute("name")},{split(/[ =]/,$nodeDataString)});
+						push(@{$countStoreTypes{$type->getAttribute("name")}},{split(/[ =]/,$nodeDataString)});
 					}
 				}			
 			}
@@ -164,10 +165,7 @@ if(-e $xsdIn && -e $xmlIn ){
 		#print Dumper($countStoreElementsHashRef);
 		
 		#parse XML document to find named Elements, counting them and injecting the count
-		$xmlData = $parserLibXML->parse_file($xmlIn);
-		
-		#TODO Start Here
-		
+		$xmlData = $parserLibXML->parse_file($xmlIn);		
 		if($xmlData){			
 			#inject counts in XMLData
 			foreach my $elementPath (keys %{$countStoreElementsHashRef}){
@@ -175,26 +173,50 @@ if(-e $xsdIn && -e $xmlIn ){
 				my $countStoreElementType = $countStoreElements{$elementPath};
 				
 				foreach my $countStoreElement ($xmlData->findnodes($elementPath)){
-					foreach my %piParams ($countStoreTypes{$countStoreElementType}){
-						#count all Elements in scope, with the correct name
-						my $elementCount = 0;
-						
-						#TODO Start Here: write logic to find all elements of the correct
-						#name and scope, and count them (use libXml's findnodes?)
-						
-						$countStoreElement->setAttribute(	$piParams{"attributeName"},
-															$elementCount);
+					foreach my $piParamsHashRef (@{$countStoreTypes{$countStoreElementType}}){					
+						if(	exists $piParamsHashRef->{"elementName"} &&
+							exists $piParamsHashRef->{"attributeName"} &&
+							exists $piParamsHashRef->{"scope"}){
+
+							#count all Elements of the name and scope specified
+							my $elementCount = 0;
+							if($piParamsHashRef->{"scope"} eq "children"){
+								$elementCount = @{$xmlData->findnodes($elementPath."/".$piParamsHashRef->{"elementName"})};
+								#store the count in the named attribute
+								$countStoreElement->setAttribute($piParamsHashRef->{"attributeName"}, $elementCount);
+							}
+							else{
+								print STDERR "WARNING: \"scope\" mode specified in Processing Instruction ".
+								"is not supported. IGNORING\n";
+							}
+						}	
+						else{
+							print STDERR "ERROR: missing data for Processing Instruction, ".
+							"please ensure \'elementName\', \'attributeName\' & \'scope\' ".
+							"are set. EXIT\n";
+							exit 1;
+						}
 					}
 				}
 			}
 			
 			#output XMLData to file
-			#TODO: update this to use the out directory, but maintain the original file
-			#name
-			$xmlData->toFile($xmlOut);
+			my $outFilePath = '';
+			if($outDir){$outFilePath = $outDir.fileparse($xmlIn);}
+			else{$outFilePath = $xmlIn;}
+			$xmlData->toFile($outFilePath);
 		}
-		else{print STDERR "xmlIn($xmlIn) is not a valid xml file. EXIT\n";}
+		else{
+			print STDERR "ERROR: xmlIn($xmlIn) is not a valid xml file. EXIT\n";
+			exit 1;
+		}
 	}
-	else{print STDERR "xsdIn($xsdIn) is not a valid xml file. EXIT\n";}
+	else{
+		print STDERR "ERROR: xsdIn($xsdIn) is not a valid xml file. EXIT\n";
+		exit 1;
+	}
 }
-else{print STDERR "Options --xsdIn --xmlIn are required. EXIT\n";}
+else{
+	print STDERR "ERROR: options --xsdIn --xmlIn are required. EXIT\n";
+	exit 1;
+}
