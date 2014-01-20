@@ -169,7 +169,13 @@ if(-e $xsdIn && -e $xmlIn ){
 		#print Dumper($countStoreElementsHashRef);
 		
 		#parse XML document to find named Elements, counting them and injecting the count
-		$xmlData = $parserLibXML->parse_file($xmlIn);		
+		$xmlData = $parserLibXML->parse_file($xmlIn);
+		
+		#validate XML doc with XSD
+		my $xsd = XML::LibXML::Schema->new('location' => $xsdIn);
+		eval {$xsd->validate($xmlData);};
+		die $@ if $@;	
+		
 		if($xmlData){			
 			#inject counts in XMLData
 			foreach my $elementPath (keys %{$countStoreElementsHashRef}){
