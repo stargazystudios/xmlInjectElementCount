@@ -191,10 +191,10 @@ if(-e $xsdIn && -e $xmlIn ){
 							#count all Elements of the name and scope specified
 							my $elementCount = 0;
 							if($piParamsHashRef->{"scope"} eq "children"){
-								$elementCount = @{$xmlData->findnodes($elementPath."/".$piParamsHashRef->{"elementName"})};
+								$elementCount = @{$countStoreElement->findnodes("./".$piParamsHashRef->{"elementName"})};
 							}
 							elsif($piParamsHashRef->{"scope"} eq "descendants"){
-								$elementCount = @{$xmlData->findnodes($elementPath."//".$piParamsHashRef->{"elementName"})};
+								$elementCount = @{$countStoreElement->findnodes(".//".$piParamsHashRef->{"elementName"})};
 							}
 							else{
 								print STDERR "WARNING: \"scope\" mode specified in Processing Instruction ".
