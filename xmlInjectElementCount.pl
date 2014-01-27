@@ -39,14 +39,24 @@
 #		attributeName=[.+]:
 #			The name of the Attribute to store the count.
 #
-#		scope=["children"|"descendants"]:
+#		scope=["children"|"descendants"|"maxDescendantChildren"]:
 #			Only Elements in the specified scope will be counted.
 #				-children: count only direct descendants of the parent Element of the 
 #				Processing Instruction.
 #				-descendants: count all descendants of the parent Element of the 
 #				Processing Instruction.
+#				-maxDescendantChildren: all descendants of the parent Element of the 
+#				Processing Instruction are considered. Only child Elements of those 
+#				secondary, descendant Elements are counted. The maximum count made for any
+#				of these descendant Elements is stored in the parent Element of the 
+#				Processing Instruction. This is useful for establishing the dimension size
+#				required, when storing static XML data in multi-dimensional, runtime data 
+#				structures.
 
 #TODO: allow for an Element Type to be specified, instead of a name.
+#TODO: break out the variables, implied and explicit, in the scope attribute of the PI. 
+#This would replace scope with: root (where to start searching), scope (how deep to 
+#search), and count (total, max, min etc.).
 
 use strict;
 use Getopt::Long;
@@ -195,6 +205,14 @@ if(-e $xsdIn && -e $xmlIn ){
 							}
 							elsif($piParamsHashRef->{"scope"} eq "descendants"){
 								$elementCount = @{$countStoreElement->findnodes(".//".$piParamsHashRef->{"elementName"})};
+							}
+							elsif($piParamsHashRef->{"scope"} eq "maxDescendantChildren"){
+								my $maxElementCount = 0;
+								foreach my $descendantElement ($countStoreElement->findnodes(".//*")){
+									my $localChildCount = @{$descendantElement->findnodes("./".$piParamsHashRef->{"elementName"})};
+									if ($localChildCount > $maxElementCount){$maxElementCount = $localChildCount;}
+								}
+								$elementCount = $maxElementCount;
 							}
 							else{
 								print STDERR "WARNING: \"scope\" mode specified in Processing Instruction ".
