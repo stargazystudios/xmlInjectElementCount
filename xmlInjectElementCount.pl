@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 #Copyright (c) 2014, Stargazy Studios
 #All Rights Reserved
@@ -58,6 +58,7 @@
 #This would replace scope with: root (where to start searching), scope (how deep to 
 #search), and count (total, max, min etc.).
 
+use warnings;
 use strict;
 use Getopt::Long;
 use XML::LibXML;
